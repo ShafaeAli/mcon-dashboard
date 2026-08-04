@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>MCON Test Dashboard</title>
+<style>
+  :root {
+    --bg: #f7f8fa; --panel: #ffffff; --ink: #1b1f27; --ink-2: #5a6272;
+    --line: #e3e6ec; --accent: #3b6fe0; --accent-ink: #2c56b4;
+    --pass: #1f8a4c; --pass-bg: #e2f4e9; --fail: #c93838; --fail-bg: #fbe7e7;
+    --ni: #8a909c; --ni-bg: #eceef2; --blk: #9c6500; --blk-bg: #fdf3d7;
+    --verify: #b45d0c; --verify-bg: #fde8cd;
+  }
+  @media (prefers-color-scheme: dark) { :root {
+    --bg: #14171c; --panel: #1c2027; --ink: #e7eaf0; --ink-2: #9aa2b1;
+    --line: #2b303a; --accent: #6b95ec; --accent-ink: #8fb0f2;
+    --pass: #34c070; --pass-bg: #16301f; --fail: #e05656; --fail-bg: #391b1b;
+    --ni: #7d8494; --ni-bg: #262a33; --blk: #d8a021; --blk-bg: #33290f;
+    --verify: #e08a2e; --verify-bg: #362510;
+  } }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); margin: 0;
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+  a { color: var(--accent-ink); text-decoration: none; }
+  a:hover, a:focus-visible { text-decoration: underline; }
+  a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 26px 20px 64px; }
+
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 4px; }
+  header h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  .phase { font-size: 12px; font-weight: 700; color: var(--accent-ink);
+           background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+           border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+           padding: 2px 10px; border-radius: 20px; }
+  nav { margin-left: auto; display: flex; align-items: center; gap: 14px; font-size: 13px; }
+  button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line);
+           background: var(--panel); color: var(--ink); padding: 6px 14px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .sub { color: var(--ink-2); font-size: 13px; margin: 2px 0 18px; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 22px; }
+  #login { max-width: 560px; margin: 60px auto; }
+  #login h2 { margin: 0 0 6px; font-size: 17px; }
+  #login p { color: var(--ink-2); font-size: 13.5px; }
+  #login ol { font-size: 13.5px; color: var(--ink-2); padding-left: 20px; }
+  #login input { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px;
+                 background: var(--bg); color: var(--ink); margin: 10px 0; }
+  .err { color: var(--fail); font-size: 13px; min-height: 18px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 16px 0 8px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; }
+  .stat .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+  .stat .v { font-size: 22px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .stat .v small { font-size: 12px; font-weight: 500; color: var(--ink-2); }
+  .stat.warn .v { color: var(--fail); } .stat.ok .v { color: var(--pass); } .stat.amber .v { color: var(--verify); }
+
+  h2.sec { font-size: 15px; font-weight: 700; margin: 28px 0 10px; }
+  h2.sec .hint { font-weight: 400; font-size: 12.5px; color: var(--ink-2); margin-left: 8px; }
+  .tablebox { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { padding: 7px 12px; text-align: left; border-top: 1px solid var(--line); white-space: nowrap; }
+  thead th { border-top: none; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+             color: var(--ink-2); background: color-mix(in srgb, var(--panel) 55%, var(--bg));
+             position: sticky; top: 0; }
+  tr.section td { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+                  color: var(--accent-ink); background: color-mix(in srgb, var(--accent) 7%, var(--panel)); padding: 5px 12px; }
+  td.test { white-space: normal; min-width: 230px; }
+  td.res { min-width: 130px; }
+  .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 3px; vertical-align: -1px; }
+  .dot.p { background: var(--pass); } .dot.f { background: var(--fail); }
+  .dot.n { background: var(--ni); opacity: .45; } .dot.b { background: var(--blk); } .dot.na { background: var(--ni); opacity: .2; }
+  .pill { display: inline-block; padding: 1px 9px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .pill.p { background: var(--pass-bg); color: var(--pass); } .pill.f { background: var(--fail-bg); color: var(--fail); }
+  .pill.n { background: var(--ni-bg); color: var(--ni); } .pill.b { background: var(--blk-bg); color: var(--blk); }
+  .pill.v { background: var(--verify-bg); color: var(--verify); }
+  .note { color: var(--ink-2); font-size: 12px; margin-left: 6px; }
+
+  .chip { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 4px;
+          border: 1px solid var(--line); color: var(--ink-2); display: inline-block; }
+  .chip.sev-blocker, .chip.sev-major { background: var(--fail-bg); color: var(--fail); border: none; }
+  .chip.sev-minor { background: var(--blk-bg); color: var(--blk); border: none; }
+  .chip.status { background: var(--verify-bg); color: var(--verify); border: none; }
+  .chip.status-verified, .chip.status-fixed-pending-verify { background: var(--pass-bg); color: var(--pass); }
+
+  .progress { height: 8px; background: var(--ni-bg); border-radius: 6px; overflow: hidden; margin-top: 6px; }
+  .progress > div { height: 100%; background: var(--pass); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--ink-2); margin: 8px 2px 0; }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  footer { margin-top: 40px; font-size: 12.5px; color: var(--ink-2); }
+  .hidden { display: none !important; }
+  @media (prefers-reduced-motion: no-preference) { .progress > div { transition: width .4s ease; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>MCON Test Dashboard</h1>
+  <span class="phase">CNC unit testing → EVT → DVT → PVT</span>
+  <nav>
+    <a id="lnk-issues" href="#" target="_blank" rel="noopener">Issues</a>
+    <a id="lnk-board" href="#" target="_blank" rel="noopener">Board</a>
+    <a id="lnk-releases" href="#" target="_blank" rel="noopener">Releases</a>
+    <button id="refresh" class="hidden">Refresh</button>
+    <button id="logout" class="hidden">Log out</button>
+  </nav>
+</header>
+<div class="sub" id="updated"></div>
+
+<div id="login" class="card">
+  <h2>Sign in with GitHub</h2>
+  <p>This page holds no data. Everything is read live from the private
+     <span class="mono">mcon-firmware-testing</span> repo — a GitHub token proves you're allowed to see it.</p>
+  <ol>
+    <li>GitHub → Settings → Developer settings → <b>Fine-grained tokens</b> → Generate new token</li>
+    <li>Repository access: <b>Only select repositories</b> → <span class="mono">mcon-firmware-testing</span></li>
+    <li>Permissions → Repository: <b>Issues: Read-only</b>, <b>Contents: Read-only</b> (Metadata is automatic)</li>
+    <li>Generate, copy the <span class="mono">github_pat_…</span> value, paste it below</li>
+  </ol>
+  <input id="token" type="password" placeholder="github_pat_…" autocomplete="off">
+  <div class="err" id="loginerr"></div>
+  <button class="primary" id="signin">Sign in</button>
+  <p style="margin-bottom:0">The token stays in this browser only (localStorage). Use "Log out" to remove it.</p>
+</div>
+
+<div id="app" class="hidden">
+  <div class="stats" id="stats"></div>
+
+  <h2 class="sec">Current session <span class="hint" id="session-hint"></span></h2>
+  <div class="card" id="session">No open test session.</div>
+
+  <h2 class="sec">Results matrix <span class="hint">per-device dots: iOS · Mac · Android</span></h2>
+  <div class="tablebox"><table id="matrix"></table></div>
+  <div class="legend">
+    <span><span class="dot p"></span> Pass</span><span><span class="dot f"></span> Fail</span>
+    <span><span class="dot n"></span> Not implemented</span><span><span class="dot b"></span> Blocked</span>
+    <span><span class="dot na"></span> N/A</span>
+  </div>
+
+  <h2 class="sec">Open bugs <span class="hint" id="bugs-hint"></span></h2>
+  <div class="tablebox"><table id="bugs"></table></div>
+
+  <footer>Data: <a id="lnk-repo" href="#" target="_blank" rel="noopener">ShafaeAli/mcon-firmware-testing</a>
+    · live from the GitHub API · matrix source <span class="mono">docs/RESULTS_HISTORY.md</span></footer>
+</div>
+
+<script>
+"use strict";
+const REPO = "ShafaeAli/mcon-firmware-testing";
+const API = "https://api.github.com";
+const EVT_DATE = new Date("2026-09-07T00:00:00");
+const $ = (id) => document.getElementById(id);
+
+$("lnk-issues").href = `https://github.com/${REPO}/issues`;
+$("lnk-board").href = "https://github.com/users/ShafaeAli/projects/1";
+$("lnk-releases").href = `https://github.com/${REPO}/releases`;
+$("lnk-repo").href = `https://github.com/${REPO}`;
+
+function token() { return localStorage.getItem("mcon_gh_token") || ""; }
+
+async function gh(path, raw = false) {
+  const r = await fetch(API + path, { headers: {
+    "Authorization": "Bearer " + token(),
+    "Accept": raw ? "application/vnd.github.raw+json" : "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  }});
+  if (r.status === 401 || r.status === 403) throw new Error("auth");
+  if (!r.ok) throw new Error("HTTP " + r.status + " on " + path);
+  return raw ? r.text() : r.json();
+}
+
+function esc(s) { const d = document.createElement("span"); d.textContent = s; return d.innerHTML; }
+function issueLink(n) { return `<a href="https://github.com/${REPO}/issues/${n}" target="_blank" rel="noopener">#${n}</a>`; }
+
+// ---- results-matrix rendering: emoji markdown -> spreadsheet cells
+function renderResultCell(text) {
+  let html = "", rest = text.trim();
+  const map = { "🟢": "p", "🔴": "f", "⚪": "n", "⬜": "na", "🟡": "b" };
+  let dots = "";
+  while (rest.length) {
+    const ch = [...rest][0];
+    if (map[ch]) { dots += `<span class="dot ${map[ch]}"></span>`; rest = rest.slice(ch.length); }
+    else break;
+  }
+  rest = rest.trim();
+  if (!dots && /^(NI|Not Impl)/i.test(rest)) { html = `<span class="pill n">Not Impl</span>`; rest = rest.replace(/^(NI|Not Impl)/i, "").trim(); }
+  else if (!dots && /^N\/A/i.test(rest)) { html = `<span class="pill n">N/A</span>`; rest = rest.replace(/^N\/A/i, "").trim(); }
+  else if (!dots && /^B(locked)?\b/i.test(rest)) { html = `<span class="pill b">Blocked</span>`; rest = rest.replace(/^B(locked)?\b/i, "").trim(); }
+  else html = dots;
+  if (rest) {
+    // linkify [#N](...) and bare #N, escape everything else
+    let safe = esc(rest.replace(/\[#(\d+)\]\([^)]*\)/g, "#$1"));
+    safe = safe.replace(/#(\d+)/g, (_, n) => issueLink(n));
+    html += `<span class="note">${safe}</span>`;
+  }
+  return html || `<span class="note">—</span>`;
+}
+
+function renderMatrix(md) {
+  const lines = md.split("\n").filter(l => l.trim().startsWith("|"));
+  const table = $("matrix");
+  table.innerHTML = "";
+  if (!lines.length) return;
+  const cells = l => l.split("|").slice(1, -1).map(c => c.trim());
+  const head = cells(lines[0]);
+  const thead = document.createElement("thead");
+  thead.innerHTML = "<tr>" + head.map(h => `<th>${esc(h.replace(/\*\*/g, ""))}</th>`).join("") + "</tr>";
+  table.appendChild(thead);
+  const tbody = document.createElement("tbody");
+  for (const line of lines.slice(2)) {
+    const c = cells(line);
+    if (!c.length) continue;
+    const tr = document.createElement("tr");
+    if (/^\*\*.+\*\*$/.test(c[0])) {
+      tr.className = "section";
+      tr.innerHTML = `<td colspan="${head.length}">${esc(c[0].replace(/\*\*/g, ""))}</td>`;
+    } else {
+      let name = esc(c[0].replace(/\*\*/g, ""));
+      tr.innerHTML = `<td class="test">${name}</td>` +
+        c.slice(1).map(v => `<td class="res">${renderResultCell(v.replace(/\*\*/g, ""))}</td>`).join("");
+    }
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+}
+
+// ---- bugs table
+function labelVal(labels, prefix) {
+  const l = labels.find(x => x.name.startsWith(prefix));
+  return l ? l.name.slice(prefix.length) : "";
+}
+function renderBugs(issues) {
+  const bugs = issues.filter(i => i.labels.some(l => l.name === "type:bug"));
+  $("bugs-hint").textContent = bugs.length ? `${bugs.length} open` : "";
+  const t = $("bugs");
+  t.innerHTML = `<thead><tr><th>#</th><th>Bug</th><th>Sev</th><th>Mode</th><th>Area</th><th>Status</th><th>Target</th></tr></thead>`;
+  const tb = document.createElement("tbody");
+  for (const i of bugs) {
+    const sev = labelVal(i.labels, "sev:"), mode = labelVal(i.labels, "mode:"),
+          area = labelVal(i.labels, "area:"), st = labelVal(i.labels, "status:");
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${issueLink(i.number)}</td><td class="test">${esc(i.title)}</td>` +
+      `<td>${sev ? `<span class="chip sev-${sev}">${sev}</span>` : ""}</td>` +
+      `<td>${mode ? `<span class="chip">${esc(mode)}</span>` : ""}</td>` +
+      `<td>${area ? `<span class="chip">${esc(area)}</span>` : ""}</td>` +
+      `<td>${st ? `<span class="chip status status-${st}">${esc(st)}</span>` : ""}</td>` +
+      `<td>${i.milestone ? esc(i.milestone.title) : ""}</td>`;
+    tb.appendChild(tr);
+  }
+  if (!bugs.length) tb.innerHTML = `<tr><td colspan="7">🎉 No open bugs.</td></tr>`;
+  t.appendChild(tb);
+  return bugs;
+}
+
+// ---- session progress
+function renderSession(issues) {
+  const s = issues.find(i => i.labels.some(l => l.name === "type:test-session"));
+  const el = $("session");
+  if (!s) { el.textContent = "No open test session — one is created with each build release."; $("session-hint").textContent = ""; return; }
+  const done = (s.body.match(/- \[x\]/gi) || []).length;
+  const todo = (s.body.match(/- \[ \]/g) || []).length;
+  const total = done + todo, pct = total ? Math.round(done / total * 100) : 0;
+  $("session-hint").textContent = "";
+  el.innerHTML = `<b>${issueLink(s.number)} ${esc(s.title)}</b>` +
+    `<span class="note">${done}/${total} checked (${pct}%)</span>` +
+    `<div class="progress"><div style="width:${pct}%"></div></div>`;
+}
+
+// ---- stats
+function renderStats(bugs, releases, matrixMd) {
+  const rel = releases.find(r => /^v\d+$/.test(r.tag_name));
+  const verify = bugs.filter(b => ["repro-confirmed", "fix-in-progress", "fixed-pending-verify", "triage"].includes(labelVal(b.labels, "status:"))).length;
+  const days = Math.max(0, Math.ceil((EVT_DATE - new Date()) / 86400000));
+  const greens = (matrixMd.match(/🟢/g) || []).length, reds = (matrixMd.match(/🔴/g) || []).length;
+  $("stats").innerHTML =
+    `<div class="stat warn"><div class="k">Open bugs</div><div class="v">${bugs.length}</div></div>` +
+    `<div class="stat amber"><div class="k">Fixes to verify</div><div class="v">${verify}</div></div>` +
+    `<div class="stat ok"><div class="k">Latest release</div><div class="v">${rel ? esc(rel.tag_name) : "—"} <small>${rel ? esc(rel.published_at.slice(0, 10)) : ""}</small></div></div>` +
+    `<div class="stat"><div class="k">Pass / fail marks</div><div class="v">${greens}<small>🟢</small> ${reds}<small>🔴</small></div></div>` +
+    `<div class="stat"><div class="k">Days to EVT</div><div class="v">${days} <small>Sep 7</small></div></div>`;
+}
+
+async function load() {
+  $("updated").textContent = "Loading…";
+  try {
+    const [issues, releases, matrixMd] = await Promise.all([
+      gh(`/repos/${REPO}/issues?state=open&per_page=100`),
+      gh(`/repos/${REPO}/releases?per_page=10`),
+      gh(`/repos/${REPO}/contents/docs/RESULTS_HISTORY.md`, true),
+    ]);
+    renderMatrix(matrixMd);
+    const bugs = renderBugs(issues);
+    renderSession(issues);
+    renderStats(bugs, releases, matrixMd);
+    $("updated").textContent = "Live · loaded " + new Date().toLocaleString();
+  } catch (e) {
+    if (e.message === "auth") { logout("Token rejected — it may have expired. Sign in again."); return; }
+    $("updated").textContent = "Load failed: " + e.message;
+  }
+}
+
+function show(loggedIn) {
+  $("login").classList.toggle("hidden", loggedIn);
+  $("app").classList.toggle("hidden", !loggedIn);
+  $("logout").classList.toggle("hidden", !loggedIn);
+  $("refresh").classList.toggle("hidden", !loggedIn);
+}
+
+function logout(msg) {
+  localStorage.removeItem("mcon_gh_token");
+  show(false);
+  $("loginerr").textContent = msg || "";
+  $("updated").textContent = "";
+}
+
+$("signin").addEventListener("click", async () => {
+  const t = $("token").value.trim();
+  if (!t) { $("loginerr").textContent = "Paste a token first."; return; }
+  localStorage.setItem("mcon_gh_token", t);
+  $("loginerr").textContent = "";
+  try {
+    await gh(`/repos/${REPO}`);          // proves the token can see the repo
+    $("token").value = "";
+    show(true); load();
+  } catch {
+    localStorage.removeItem("mcon_gh_token");
+    $("loginerr").textContent = "That token can't access the repo — check repository access + Issues/Contents read permissions.";
+  }
+});
+$("token").addEventListener("keydown", e => { if (e.key === "Enter") $("signin").click(); });
+$("logout").addEventListener("click", () => logout());
+$("refresh").addEventListener("click", load);
+
+if (token()) { show(true); load(); } else show(false);
+</script>
+</body>
+</html>
