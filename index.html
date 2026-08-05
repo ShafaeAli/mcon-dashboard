@@ -114,16 +114,20 @@
   <h2>Sign in with GitHub</h2>
   <p>This page holds no data. Everything is read live from the private
      <span class="mono">mcon-firmware-testing</span> repo — a GitHub token proves you're allowed to see it.</p>
-  <ol>
-    <li>GitHub → Settings → Developer settings → <b>Fine-grained tokens</b> → Generate new token</li>
-    <li>Repository access: <b>Only select repositories</b> → <span class="mono">mcon-firmware-testing</span></li>
-    <li>Permissions → Repository: <b>Issues: Read-only</b>, <b>Contents: Read-only</b> (Metadata is automatic)</li>
-    <li>Generate, copy the <span class="mono">github_pat_…</span> value, paste it below</li>
-  </ol>
-  <input id="token" type="password" placeholder="github_pat_…" autocomplete="off">
+  <p><b>Testers / collaborators (Scott):</b> create a <b>classic</b> token —
+     GitHub → Settings → Developer settings → Personal access tokens → <b>Tokens (classic)</b> →
+     Generate new token (classic) → name it "MCON dashboard", expiration 90 days, tick the single
+     <b><span class="mono">repo</span></b> checkbox → Generate → copy the <span class="mono">ghp_…</span>
+     value and paste it below.
+     <i>(Fine-grained tokens won't work for you — GitHub doesn't let them access a private repo owned
+     by someone else's personal account, which is why the repo never appears in the list.)</i></p>
+  <p><b>Repo owner:</b> a fine-grained token scoped to <span class="mono">mcon-firmware-testing</span>
+     with Issues + Contents read-only works too.</p>
+  <input id="token" type="password" placeholder="ghp_… or github_pat_…" autocomplete="off">
   <div class="err" id="loginerr"></div>
   <button class="primary" id="signin">Sign in</button>
-  <p style="margin-bottom:0">The token stays in this browser only (localStorage). Use "Log out" to remove it.</p>
+  <p style="margin-bottom:0">The token stays in this browser only (localStorage). Use "Log out" to remove it.
+     When the token expires, GitHub emails you — just make a new one and sign in again.</p>
 </div>
 
 <div id="app" class="hidden">
