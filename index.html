@@ -263,14 +263,15 @@ function renderBugs(issues) {
 function renderSession(issues) {
   const s = issues.find(i => i.labels.some(l => l.name === "type:test-session"));
   const el = $("session");
-  if (!s) { el.textContent = "No open test session — one is created with each build release."; $("session-hint").textContent = ""; return; }
+  if (!s) { el.textContent = "No open test session — one is created with each build release. Full-suite results run in the master Google Sheet."; $("session-hint").textContent = ""; return; }
   const done = (s.body.match(/- \[x\]/gi) || []).length;
   const todo = (s.body.match(/- \[ \]/g) || []).length;
   const total = done + todo, pct = total ? Math.round(done / total * 100) : 0;
   $("session-hint").textContent = "";
   el.innerHTML = `<b>${issueLink(s.number)} ${esc(s.title)}</b>` +
-    `<span class="note">${done}/${total} checked (${pct}%)</span>` +
-    `<div class="progress"><div style="width:${pct}%"></div></div>`;
+    (total ? `<span class="note">${done}/${total} checked (${pct}%)</span>` +
+             `<div class="progress"><div style="width:${pct}%"></div></div>`
+           : `<span class="note">results run in the master Google Sheet; synced to the matrix below after ingest</span>`);
 }
 
 // ---- stats
