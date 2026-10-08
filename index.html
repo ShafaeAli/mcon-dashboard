@@ -155,7 +155,7 @@
 "use strict";
 const REPO = "ShafaeAli/mcon-firmware-testing";
 const API = "https://api.github.com";
-const EVT_DATE = new Date("2026-09-07T00:00:00");
+const EVT_DATE = new Date("2026-10-26T00:00:00");
 const $ = (id) => document.getElementById(id);
 
 $("lnk-issues").href = `https://github.com/${REPO}/issues`;
@@ -276,7 +276,7 @@ function renderSession(issues) {
 
 // ---- stats
 function renderStats(bugs, releases, matrixMd) {
-  const rel = releases.find(r => /^v\d+$/.test(r.tag_name));
+  const rel = releases.find(r => !r.prerelease && /^v\d+(\.\d+)?$/.test(r.tag_name));
   const verify = bugs.filter(b => ["repro-confirmed", "fix-in-progress", "fixed-pending-verify", "triage"].includes(labelVal(b.labels, "status:"))).length;
   const days = Math.max(0, Math.ceil((EVT_DATE - new Date()) / 86400000));
   const greens = (matrixMd.match(/🟢/g) || []).length, reds = (matrixMd.match(/🔴/g) || []).length;
@@ -285,7 +285,7 @@ function renderStats(bugs, releases, matrixMd) {
     `<div class="stat amber"><div class="k">Fixes to verify</div><div class="v">${verify}</div></div>` +
     `<div class="stat ok"><div class="k">Latest release</div><div class="v">${rel ? esc(rel.tag_name) : "—"} <small>${rel ? esc(rel.published_at.slice(0, 10)) : ""}</small></div></div>` +
     `<div class="stat"><div class="k">Pass / fail marks</div><div class="v">${greens}<small>🟢</small> ${reds}<small>🔴</small></div></div>` +
-    `<div class="stat"><div class="k">Days to EVT</div><div class="v">${days} <small>Sep 7</small></div></div>`;
+    `<div class="stat"><div class="k">Days to EVT</div><div class="v">${days} <small>Oct 26</small></div></div>`;
 }
 
 async function load() {
